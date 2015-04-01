@@ -17,12 +17,9 @@ class CTDailyQASubmitter(object):
     def __init__(self, filename):
 
         self.filename = filename
-        # self.url = "http://127.0.0.1:8080/"
-        # self.username = 'admin'
-        # self.password = 'admin'
-        self.url = "http://chi-wikiphysics/"
-        self.username = 'therapist'
-        self.password = 'test'
+        self.url = "http://127.0.0.1:8080/"
+        self.username = 'admin'
+        self.password = 'admin'
 
     def set_qatrack_server(self, url, username, password):
         """Setup the QA Track+ server settings."""
@@ -61,7 +58,7 @@ class CTDailyQASubmitter(object):
             "work_started": data[0].replace(hour=6).strftime("%d-%m-%Y %H:%M"),
             "work_completed": data[0].replace(
                 hour=6, minute=30).strftime("%d-%m-%Y %H:%M"),
-            # "status": 0,  # Approved status
+            "status": 2,  # Approved status
             "form-TOTAL_FORMS": "25",
             "form-INITIAL_FORMS": "25",
             "form-MAX_NUM_FORMS": "1000"
