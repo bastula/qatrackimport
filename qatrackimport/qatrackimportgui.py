@@ -19,6 +19,7 @@ from PyQt5.QtCore import Qt
 import json
 import threading
 import ctdailyqasubmitter
+import mqassessmentssubmitter
 
 
 class QATrackImportGui(QMainWindow):
@@ -62,6 +63,14 @@ class QATrackImportGui(QMainWindow):
         self.ui.action_Exit.triggered.connect(qApp.quit)
         self.ui.action_About.triggered.connect(self.about)
         self.ui.btnSubmit.clicked.connect(self.submitData)
+        self.ui.action_Dryrun_Mode.toggled.connect(self.enableDryRun)
+
+    def enableDryRun(self, dryrun):
+        "Display the status of Dry run Mode."
+
+        msg = "Dry run is "
+        msg += "enabled" if dryrun else "disabled"
+        self.ui.statusbar.showMessage(msg)
 
     def initSettings(self):
         """Initialize the settings for the QATrack+ Import Gui."""
@@ -84,7 +93,7 @@ class QATrackImportGui(QMainWindow):
         except:
             self.progress = {}
 
-        print(self.progress)
+        print('initial', self.progress)
 
     def about(self):
         """Display an about screen for the application."""
@@ -107,21 +116,38 @@ class QATrackImportGui(QMainWindow):
     def submitData(self):
         """Submit the machine data to the QATrack+ server."""
 
+        qatcreds = self.config['qatrack_credentials']
+
         # Determine which machines are selected
         for i in self.ui.listMachines.selectedItems():
             machineid = i.data(Qt.UserRole)
             for m in self.config['machines']:
                 # Find the machine from config
                 if m['id'] == machineid:
-                    machine = m
-                    print(machine)
                     # Submit data for CT Daily Excel
-                    if machine['type'] == "ct_daily_excel":
+                    if m['type'] == "ct_daily_excel":
                         reader = ctdailyqasubmitter.CTDailyQASubmitter(
-                            machine["file"])
+                            m["file"])
                         reader.read_excel_file()
+                        reader.set_qatrack_server(
+                            url=qatcreds['url'],
+                            username=qatcreds['username'],
+                            password=qatcreds['password'])
                         reader.submit_data(
                             utc=1, startrow=self.progress[m['id']],
+                            progressfunc=self.ui.statusbar.showMessage,
+                            updatefunc=self.saveProgress,
+                            dryrun=self.ui.action_Dryrun_Mode.isChecked())
+                    # Submit data for MosaiQ Assessment
+                    if m['type'] == "mosaiq_assessment":
+                        mqcreds = self.config['mosaiq_credentials']
+                        reader = mqassessmentssubmitter.MQAssessmentsSubmitter(
+                            server=mqcreds['server'],
+                            username=mqcreds['username'],
+                            password=mqcreds['password'])
+                        reader.submit_data(
+                            viewid=m['viewid'], patientid=m['patientid'],
+                            utc=m['id'], mapping=m['mapping'],
                             progressfunc=self.ui.statusbar.showMessage,
                             updatefunc=self.saveProgress)
                     break
@@ -129,9 +155,11 @@ class QATrackImportGui(QMainWindow):
     def saveProgress(self, utc, progress):
         """Save the progress of the import operation to disk."""
 
-        self.progress[utc] = progress
-        with open(self.progressfile, 'w') as p:
-            json.dump(self.progress, p)
+        self.progress[str(utc)] = progress
+        # Only write out the file if not in Dry run mode
+        if not self.ui.action_Dryrun_Mode.isChecked():
+            with open(self.progressfile, 'w') as p:
+                json.dump(self.progress, p)
 
 # ############################## Other Functions ##############################
 
