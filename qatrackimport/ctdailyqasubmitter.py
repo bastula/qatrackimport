@@ -106,7 +106,7 @@ class CTDailyQASubmitter(object):
         test_results["comment"] = "Performed by " + data[1] + \
             "\nRow " + str(row) + "\n" + comment
 
-        logger.debug("aaa%s", pprint.pformat(test_results))
+        logger.debug("Test Results: %s", pprint.pformat(test_results))
 
         return test_results
 

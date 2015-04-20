@@ -12,10 +12,16 @@ import traceback
 logger = logging.getLogger('qatrackimport')
 logger.setLevel(logging.DEBUG)
 
-from PyQt5.QtWidgets import (QApplication, QMainWindow, qApp, QMessageBox,
+try:
+    from PyQt5.QtWidgets import (QApplication, QMainWindow, qApp, QMessageBox,
+                                 QListWidgetItem)
+    from PyQt5 import uic
+    from PyQt5.QtCore import Qt
+except:
+    from PyQt4.QtGui import (QApplication, QMainWindow, qApp, QMessageBox,
                              QListWidgetItem)
-from PyQt5 import uic
-from PyQt5.QtCore import Qt
+    from PyQt4 import uic
+    from PyQt4.QtCore import Qt
 import json
 import threading
 import ctdailyqasubmitter
@@ -145,11 +151,18 @@ class QATrackImportGui(QMainWindow):
                             server=mqcreds['server'],
                             username=mqcreds['username'],
                             password=mqcreds['password'])
+                        reader.set_qatrack_server(
+                            url=qatcreds['url'],
+                            username=qatcreds['username'],
+                            password=qatcreds['password'])
                         reader.submit_data(
-                            viewid=m['viewid'], patientid=m['patientid'],
-                            utc=m['id'], mapping=m['mapping'],
+                            viewid=m['viewid'],
+                            startdate=self.getProgress(m['id']),
+                            patientid=m['patientid'], utc=m['id'],
+                            mapping=m['mapping'],
                             progressfunc=self.ui.statusbar.showMessage,
-                            updatefunc=self.saveProgress)
+                            updatefunc=self.saveProgress,
+                            dryrun=self.ui.action_Dryrun_Mode.isChecked())
                     break
 
     def saveProgress(self, utc, progress):
@@ -160,6 +173,12 @@ class QATrackImportGui(QMainWindow):
         if not self.ui.action_Dryrun_Mode.isChecked():
             with open(self.progressfile, 'w') as p:
                 json.dump(self.progress, p)
+
+    def getProgress(self, utc):
+        """Get the current progress of the import operation."""
+
+        return self.progress[utc] if utc in self.progress else None
+
 
 # ############################## Other Functions ##############################
 
