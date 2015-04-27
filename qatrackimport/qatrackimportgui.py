@@ -9,8 +9,8 @@
 import logging
 import logging.handlers
 import traceback
-logger = logging.getLogger('qatrackimport')
-logger.setLevel(logging.DEBUG)
+import pprint
+logger = logging.getLogger('qatrackimport.gui')
 
 try:
     from PyQt5.QtWidgets import (QApplication, QMainWindow, qApp, QMessageBox,
@@ -30,10 +30,10 @@ import mqassessmentssubmitter
 
 class QATrackImportGui(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, debug=False):
         super(QATrackImportGui, self).__init__()
 
-        self.initLogging()
+        self.initLogging(debug)
 
         # Load the ui from the Qt Designer file
         self.ui = uic.loadUi('resources/main.ui')
@@ -43,14 +43,27 @@ class QATrackImportGui(QMainWindow):
         self.initSettings()
         self.populateMachines()
 
-    def initLogging(self):
+    def initLogging(self, debug=False):
         """Initialize the logging system."""
 
         # Initialize logging
-        logger.setLevel(logging.INFO)
+        logger = logging.getLogger('qatrackimport')
+        if debug:
+            logger.setLevel(logging.DEBUG)
+        else:
+            logger.setLevel(logging.INFO)
         ch = logging.StreamHandler()
         ch.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
         logger.addHandler(ch)
+
+        # Add file logger
+        fhlog = 'qatrackimport.log'
+        fh = logging.handlers.RotatingFileHandler(
+            fhlog, maxBytes=524288, backupCount=7)
+        fh.setFormatter(logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        fh.setLevel(logging.DEBUG)
+        logger.addHandler(fh)
 
         # Configure the exception hook to process threads as well
         # self.InstallThreadExcepthook()
@@ -76,6 +89,7 @@ class QATrackImportGui(QMainWindow):
 
         msg = "Dry run is "
         msg += "enabled" if dryrun else "disabled"
+        logger.info(msg)
         self.ui.statusbar.showMessage(msg)
 
     def initSettings(self):
@@ -99,7 +113,7 @@ class QATrackImportGui(QMainWindow):
         except:
             self.progress = {}
 
-        print('initial', self.progress)
+        logger.info('Machine progress: %s', pprint.pformat(self.progress))
 
     def about(self):
         """Display an about screen for the application."""
@@ -132,6 +146,7 @@ class QATrackImportGui(QMainWindow):
                 if m['id'] == machineid:
                     # Submit data for CT Daily Excel
                     if m['type'] == "ct_daily_excel":
+                        logger.info("Submitting data for: %s", m["name"])
                         reader = ctdailyqasubmitter.CTDailyQASubmitter(
                             m["file"])
                         reader.read_excel_file()
@@ -145,7 +160,8 @@ class QATrackImportGui(QMainWindow):
                             updatefunc=self.saveProgress,
                             dryrun=self.ui.action_Dryrun_Mode.isChecked())
                     # Submit data for MosaiQ Assessment
-                    if m['type'] == "mosaiq_assessment":
+                    elif m['type'] == "mosaiq_assessment":
+                        logger.info("Submitting data for: %s", m["name"])
                         mqcreds = self.config['mosaiq_credentials']
                         reader = mqassessmentssubmitter.MQAssessmentsSubmitter(
                             server=mqcreds['server'],
@@ -159,7 +175,7 @@ class QATrackImportGui(QMainWindow):
                             viewid=m['viewid'],
                             startdate=self.getProgress(m['id']),
                             patientid=m['patientid'], utc=m['id'],
-                            mapping=m['mapping'],
+                            mapping=byteify(m['mapping']),
                             progressfunc=self.ui.statusbar.showMessage,
                             updatefunc=self.saveProgress,
                             dryrun=self.ui.action_Dryrun_Mode.isChecked())
@@ -201,10 +217,46 @@ class QATrackImportGui(QMainWindow):
         threading.Thread.run = Run
 
 
-if __name__ == '__main__':
+def byteify(input):
+    """Convert decoded json from unicode to byte strings (Python 2.x).
+       Taken from: http://stackoverflow.com/a/13105359/74123."""
 
     import sys
 
+    # Skip if on Python 3 or higher as it deals with unicode natively
+    if sys.version_info[0] >= 3:
+        return input
+    elif isinstance(input, dict):
+        return {byteify(key): byteify(value)
+                for key, value in input.iteritems()}
+    elif isinstance(input, list):
+        return [byteify(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input
+
+
+if __name__ == '__main__':
+
+    import sys
+    import argparse
+
+    # Set up argparser to parse the command-line arguments
+    class DefaultParser(argparse.ArgumentParser):
+        def error(self, message):
+            sys.stderr.write('error: %s\n' % message)
+            self.print_help()
+            sys.exit(2)
+
+    parser = DefaultParser(
+        description="GUI to submit test results to a QATrack+ server.")
+    parser.add_argument("-d", "--debug",
+                        help="Show debug log",
+                        action="store_true")
+
+    args = parser.parse_args()
+
     app = QApplication(sys.argv)
-    mainWindow = QATrackImportGui()
+    mainWindow = QATrackImportGui(args.debug)
     sys.exit(app.exec_())

@@ -95,11 +95,11 @@ class MQAssessmentsSubmitter(object):
             if str(x[3]) in mapping:
                 m = mapping[str(x[3])]
                 key = "form-" + str(m[0]) + "-value"
-                if str(m[1]) is "bool":
+                if "bool" in str(m[1]):
                     test_results[key] = int(x[4])
-                elif str(m[1]) is "float":
+                elif "float" in str(m[1]):
                     test_results[key] = x[4]
-                elif str(m[1]) is "str":
+                elif "str" in str(m[1]):
                     test_results[key] = x[5].rstrip()
 
         logger.debug('Mapping: %s', pprint.pformat(mapping))
@@ -226,10 +226,14 @@ class MQAssessmentsSubmitter(object):
                     "Reading record: " + str(rownum) + " of " + str(end))
             # If the test results aren't None, submit to server
             if test_results and not dryrun:
+                logger.info("Submitting Row # %s to server", rownum)
                 text = rs.submit_data(utc, test_results)
                 with open("result.html", 'w') as f:
                     f.write(text)
             rownum = rownum + 1
+            # Update the update function after the result has been submitted
+            if updatefunc:
+                    updatefunc(utc, date)
 
 if __name__ == '__main__':
 

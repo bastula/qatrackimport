@@ -152,6 +152,9 @@ class CTDailyQASubmitter(object):
                         f.write(text)
 
             rownum = rownum + 1
+            # Update the update function after the result has been submitted
+            if updatefunc:
+                updatefunc(utc, rownum)
 
 if __name__ == '__main__':
 
