@@ -186,7 +186,8 @@ class MQAssessmentsSubmitter(object):
         logger.info("Connecting to QATrack+ Server...")
         rs = resultssubmitter.ResultsSubmitter(
             self.qat_url, self.qat_username, self.qat_password)
-        print(self.qat_url, self.qat_username, self.qat_password)
+        logger.debug("%s %s %s",
+                     self.qat_url, self.qat_username, self.qat_password)
 
         # Connect to the MosaiQ DB Server
         if progressfunc:
@@ -199,6 +200,11 @@ class MQAssessmentsSubmitter(object):
                         obsreqs[0][1].strftime(dtformat),
                         obsreqs[-1][1].strftime(dtformat))
         else:
+            nodatamsg = "No data to import from " + \
+                startdate + " to " + str(enddate) + "."
+            if progressfunc:
+                progressfunc(nodatamsg)
+            logger.info(nodatamsg)
             return
 
         # Iterate over the selected rows
@@ -233,7 +239,14 @@ class MQAssessmentsSubmitter(object):
             rownum = rownum + 1
             # Update the update function after the result has been submitted
             if updatefunc:
-                    updatefunc(utc, date)
+                dateplusone = obsreq[1] + datetime.timedelta(days=1)
+                updatefunc(utc, dateplusone.strftime(dtformat))
+
+        completionmsg = "Imported " + rownum + " rows from " + \
+            startdate + " to " + str(enddate) + "."
+        if progressfunc:
+            progressfunc(completionmsg)
+        logger.info(completionmsg)
 
 if __name__ == '__main__':
 
