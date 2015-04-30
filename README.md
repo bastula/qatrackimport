@@ -2,6 +2,8 @@
 
 This package consists of several helper scripts and a GUI that allow easy import of radiotherapy machine quality assurance (QA) data into [QATrack+](http://qatrackplus.com).
 
+This project is a significant extension of the original idea from this Google Group [thread](https://groups.google.com/forum/#!msg/qatrack/vO5H-zsfgsc/otXZ65itI4YJ).
+
 #### Screenshot:
 
 ![Screenshot of GUI](https://cloud.githubusercontent.com/assets/61406/7419859/7a9827f8-ef3d-11e4-9c6f-88e0242a9411.png)
@@ -14,9 +16,10 @@ Current import sources are:
 
 The code runs on Python 2/3 and requires the following modules:
 
+* [requests](http://python-requests.org) - used to submit data to QATrack+
 * [openpyxl](https://bitbucket.org/openpyxl/openpyxl) - used to read Excel 2007/2010 xlsx files
 * [pymssql](http://www.pymssql.org/) - used to read from the MosaiQ database
-* [PyQt](http://www.riverbankcomputing.com/software/pyqt/) (optional) - used to dislplay the GUI (PyQt4 and PyQt5 both work)
+* [PyQt](http://www.riverbankcomputing.com/software/pyqt/) (optional) - used to display the GUI (PyQt4 and PyQt5 both work)
 
 All script configuration options are documented by running the command with the argument ```--help```
 
