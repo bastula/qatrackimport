@@ -201,7 +201,7 @@ class MQAssessmentsSubmitter(object):
                         obsreqs[-1][1].strftime(dtformat))
         else:
             nodatamsg = "No data to import from " + \
-                startdate + " to " + str(enddate) + "."
+                str(startdate) + " to " + str(enddate) + "."
             if progressfunc:
                 progressfunc(nodatamsg)
             logger.info(nodatamsg)
@@ -238,12 +238,13 @@ class MQAssessmentsSubmitter(object):
                     f.write(text)
             rownum = rownum + 1
             # Update the update function after the result has been submitted
+            dateplusone = (obsreq[1] + datetime.timedelta(days=1)).strftime(
+                dtformat)
             if updatefunc:
-                dateplusone = obsreq[1] + datetime.timedelta(days=1)
-                updatefunc(utc, dateplusone.strftime(dtformat))
+                updatefunc(utc, dateplusone)
 
-        completionmsg = "Imported " + rownum + " rows from " + \
-            startdate + " to " + str(enddate) + "."
+        completionmsg = "Imported " + str(rownum) + " rows from " + \
+            str(startdate) + " to " + dateplusone + "."
         if progressfunc:
             progressfunc(completionmsg)
         logger.info(completionmsg)
