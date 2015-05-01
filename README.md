@@ -13,7 +13,6 @@ Current import sources are:
 * *Microsoft Excel files* (used for importing CT Daily QA stored in .xlsx format)
 * *Elekta MosaiQ* (used to read QA stored in a patient assessment)
 
-
 The code runs on Python 2/3 and requires the following modules:
 
 * [requests](http://python-requests.org) - used to submit data to QATrack+
@@ -64,3 +63,5 @@ To automate import, use the GUI and create a corresponding ```config.json``` fil
 }
 
 ```
+
+Some icons by [Yusuke Kamiyamane](http://p.yusukekamiyamane.com/). Licensed under a [Creative Commons Attribution 3.0 License](http://creativecommons.org/licenses/by/3.0/).
