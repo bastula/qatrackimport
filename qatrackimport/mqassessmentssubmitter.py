@@ -243,7 +243,7 @@ class MQAssessmentsSubmitter(object):
             if updatefunc:
                 updatefunc(utc, dateplusone)
 
-        completionmsg = "Imported " + str(rownum) + " rows from " + \
+        completionmsg = "Imported " + str(rownum - 1) + " rows from " + \
             str(startdate) + " to " + dateplusone + "."
         if progressfunc:
             progressfunc(completionmsg)
